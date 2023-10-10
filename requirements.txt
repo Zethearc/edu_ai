@@ -2,3 +2,4 @@ streamlit
 chromadb
 replicate
 langchain
+sentence-transformers
