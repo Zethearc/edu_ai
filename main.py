@@ -30,7 +30,7 @@ with st.sidebar:
     
     temperature = st.sidebar.slider('Temperatura', min_value=0.01, max_value=5.0, value=0.1, step=0.01)
     top_p = st.sidebar.slider('Top P', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
-    max_length = st.sidebar.slider('Longitud Máxima', min_value=100, max_value=1000, value=250, step=10)
+    max_length = st.sidebar.slider('Longitud Máxima', min_value=100, max_value=1000, value=500, step=10)
     
 os.environ['REPLICATE_API_TOKEN'] = replicate_api
 
