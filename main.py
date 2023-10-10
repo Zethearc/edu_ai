@@ -11,7 +11,7 @@ from langchain.vectorstores import Chroma
 from langchain.document_loaders import TextLoader
 
 # load the document and split it into chunks
-loader = TextLoader("/datos.csv")
+loader = TextLoader("datos.csv")
 documents = loader.load()
 
 # split it into chunks
