@@ -22,11 +22,11 @@ with st.sidebar:
     st.subheader('Modelos y parámetros')
     selected_model = st.sidebar.selectbox('Elige un modelo de Llama2', ['Llama2-7B', 'Llama2-13B', 'Llama2-70B'], key='selected_model')
     if selected_model == 'Llama2-7B':
-        llm = 'meta/llama-2-7b-chat'
+        llm = 'meta/llama-2-7b-chat:8e6975e5ed6174911a6ff3d60540dfd4844201974602551e10e9e87ab143d81e'
     elif selected_model == 'Llama2-13B':
-        llm = 'meta/llama-2-13b-chat'
+        llm = 'meta/llama-2-13b-chat:f4e2de70d66816a838a89eeeb621910adffb0dd0baba3976c96980970978018d'
     else:
-        llm = 'meta/llama-2-70b-chat'
+        llm = 'meta/llama-2-70b-chat:02e509c789964a7ea8736978a43525956ef40397be9033abf9fd2badfe68c9e3'
     
     temperature = st.sidebar.slider('temperatura', min_value=0.01, max_value=5.0, value=0.1, step=0.01)
     top_p = st.sidebar.slider('top_p', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
