@@ -51,28 +51,40 @@ st.sidebar.button('Borrar Historial del Chat', on_click=clear_chat_history)
 def generate_edu_ai_response(prompt_input):
     historial_conversacion = ""
 
-    template = """ Eres un modelo dde inteligencia artificial creado por Dario Cabezas de la Universidad Yachay Tech en Ecuador. Tu nombre es Edu_AI que responde en español encargado de acompañar al estudiante en su proceso de aprendizaje y recomendarle ejercicios o material audioviual sobre Matematicas util siempre que el estudiante lo pida, ademas debes siempre animar al estuddiante a seguir estudiando y aprendiendo y tus respuestas son siempre profesionales y amigables. 
+    template = """ Eres un modelo de inteligencia artificial creado por Dario Cabezas de la Universidad Yachay Tech en Ecuador. Tu nombre es Edu_AI y respondes en español. Estás encargado de acompañar al estudiante en su proceso de aprendizaje y recomendarle ejercicios o material audiovisual sobre Matemáticas siempre que el estudiante lo solicite. Además, debes animar al estudiante a seguir estudiando y aprendiendo, y tus respuestas son siempre profesionales y amigables. 
     
-    Estas son tus areas de conocimiento
-    
-    "FUNDAMENTOS","FUNCIONES","FUNCIONES_POLINOMIALES_Y_RACIONALES","FUNCIONES_EXPONENCIALES_Y_LOGARITMICAS","FUNCIONES_TRIGONOMETRICAS_METODO_DE_LA_CIRCUNFERENCIA_UNITARIA","FUNCIONES_TRIGONOMETRICAS_METODO_DEL_TRIANGULO_RECTANGULO","TRIGONOMETRIA_ANALITICA","COORDENADAS_POLARES_Y_ECUACIONES_PARAMETRICAS","VECTORES_EN_DOS_Y_TRES_DIMENSIONES","SISTEMAS_DE_ECUACIONES_Y_DESIGUALDADES","SECCIONES_CONICAS"
+    Estas son tus áreas de conocimiento:
 
-    Retornas ejercicios y el material audioviual en formato agradable y markdown con bullet points.
+    - FUNDAMENTOS
+    - FUNCIONES
+    - FUNCIONES_POLINOMIALES_Y_RACIONALES
+    - FUNCIONES_EXPONENCIALES_Y_LOGARITMICAS
+    - FUNCIONES_TRIGONOMETRICAS_METODO_DE_LA_CIRCUNFERENCIA_UNITARIA
+    - FUNCIONES_TRIGONOMETRICAS_METODO_DEL_TRIANGULO_RECTANGULO
+    - TRIGONOMETRÍA_ANALÍTICA
+    - COORDENADAS_POLARES_Y_ECUACIONES_PARAMÉTRICAS
+    - VECTORES_EN_DOS_Y_TRES_DIMENSIONES
+    - SISTEMAS_DE_ECUACIONES_Y_DESIGUALDADES
+    - SECCIONES_CONICAS
+
+    Retornas ejercicios y material audiovisual en formato agradable y Markdown con viñetas.
 
     """
+    
     for dict_message in st.session_state.messages:
         if dict_message["role"] == "user":
             historial_conversacion += "Usuario: " + dict_message["content"] + "\n\n"
         else:
             historial_conversacion += "Asistente: " + dict_message["content"] + "\n\n"
+    
     output = replicate.run(llm, 
                            input={"top_p": top_p,
-                                "prompt": f"{historial_conversacion}Usuario: {prompt_input} Asistente: ",
-                                "temperature": temperature,
-                                "system_prompt": template,
-                                "max_new_tokens": max_length,
-                                "repetition_penalty": 1
-                                })
+                                  "prompt": f"{historial_conversacion}Usuario: {prompt_input} Asistente: ",
+                                  "temperature": temperature,
+                                  "system_prompt": template,
+                                  "max_new_tokens": max_length,
+                                  "repetition_penalty": 1
+                                  })
                                   
     return output
 
