@@ -3,11 +3,11 @@ import replicate
 import os
 
 # Título de la aplicación
-st.set_page_config(page_title="🦙💬 Llama 2 Chatbot")
+st.set_page_config(page_title="💬 EDUAI Chatbot")
 
 # Credenciales de Replicate
 with st.sidebar:
-    st.title('🦙💬 Llama 2 Chatbot')
+    st.title('💬 EDUAI Chatbot')
     if 'REPLICATE_API_TOKEN' in st.secrets:
         st.success('Clave API ya proporcionada', icon='✅')
         replicate_api = st.secrets['REPLICATE_API_TOKEN']
