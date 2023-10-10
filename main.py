@@ -35,7 +35,7 @@ os.environ['REPLICATE_API_TOKEN'] = replicate_api
 
 # Almacenar respuestas generadas por Edu_AI
 if "messages" not in st.session_state.keys():
-    st.session_state.messages = [{"role": "assistant", "content": "¿En qué puedo ayudarte hoy?"}]
+    st.session_state.messages = [{"role": "assistant", "content": "¿Soy EDU_AI, desarrollado en la Universidad Yachay Tech ,En qué puedo ayudarte hoy?"}]
 
 # Mostrar o borrar mensajes del chat
 for message in st.session_state.messages:
