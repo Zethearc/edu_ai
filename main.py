@@ -3,27 +3,6 @@ import streamlit as st
 import replicate
 import os
 
-# Crear un cliente ChromaDB y obtener la colección 'edu_ai'
-# import
-from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import Chroma
-from langchain.document_loaders import TextLoader
-
-# load the document and split it into chunks
-loader = TextLoader("datos.csv")
-documents = loader.load()
-
-# split it into chunks
-text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-docs = text_splitter.split_documents(documents)
-
-# create the open-source embedding function
-embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-
-# load it into Chroma
-db = Chroma.from_documents(docs, embedding_function)
-
 # Título de la aplicación
 st.set_page_config(page_title="🤖 Edu_AI Chatbot")
 
@@ -70,11 +49,9 @@ st.sidebar.button('Borrar Historial del Chat', on_click=clear_chat_history)
 
 # Función para generar una respuesta de Edu_AI
 def generate_edu_ai_response(prompt_input):
-    results = db.query(query_texts=[prompt_input], n_results=3)
-    historial_conversacion = f""" Eres un modelo dde inteligencia artificial creado por Dario Cabezas de la Universidad Yachay Tech en Ecuador. Tu nombre es Edu_AI que responde en español encargado de acompañar al estudiante en su proceso de aprendizaje y recomendarle ejercicios o meterial audioviual util siempre que el estudiante lo pida, ademas debes siempre animar al estuddiante a seguir estudiando y aprendiendo y tus respuestas son siempre profesionales y amigables. 
+    historial_conversacion = """ Eres un modelo dde inteligencia artificial creado por Dario Cabezas de la Universidad Yachay Tech en Ecuador. Tu nombre es Edu_AI que responde en español encargado de acompañar al estudiante en su proceso de aprendizaje y recomendarle ejercicios o meterial audioviual util siempre que el estudiante lo pida, ademas debes siempre animar al estuddiante a seguir estudiando y aprendiendo y tus respuestas son siempre profesionales y amigables. 
     
     Complementa tus respuestas si es necesario con el siguiente contexto, si no hay contexto no recomiendes nada.
-    {results["metadatas"][0][1]}
     Retorna del contexto el ejercicio y el material audioviual en formato agradable y markdown con bullet points.
 
     """
