@@ -22,9 +22,9 @@ with st.sidebar:
     st.subheader('Modelos y parámetros')
     selected_model = st.sidebar.selectbox('Elige un modelo de Llama2', ['Llama2-7B', 'Llama2-13B', 'Llama2-70B'], key='selected_model')
     if selected_model == 'Llama2-7B':
-        llm = 'replicate/llama7b-v2-chat:4f0a4744c7295c024a1de15e1a63c880d3da035fa1f49bfd344fe076074c8eea'
+        llm = 'a16z-infra/llama7b-v2-chat:4f0a4744c7295c024a1de15e1a63c880d3da035fa1f49bfd344fe076074c8eea'
     elif selected_model == 'Llama2-13B':
-        llm = 'replicate/llama13b-v2-chat:df7690f1994d94e96ad9d568eac121aecf50684a0b0963b25a41cc40061269e5'
+        llm = 'a16z-infra/llama13b-v2-chat:df7690f1994d94e96ad9d568eac121aecf50684a0b0963b25a41cc40061269e5'
     else:
         llm = 'replicate/llama70b-v2-chat:e951f18578850b652510200860fc4ea62b3b16fac280f83ff32282f87bbd2e48'
     
@@ -49,14 +49,15 @@ st.sidebar.button('Borrar Historial del Chat', on_click=clear_chat_history)
 
 # Función para generar una respuesta de Llama2
 def generate_llama2_response(prompt_input):
-    string_dialogue = """EDUAI es un chatbot educativo diseñado para ayudarte con tus estudios de matemáticas. Siempre estoy aquí para proporcionarte información y sugerencias relacionadas con las matemáticas. Puedo ofrecerte ejercicios y material audiovisual en un formato amigable. Estas son las áreas de matemáticas que puedo cubrir: - Fundamentos - Funciones - Funciones Polinomiales y Racionales - Funciones Exponenciales y Logarítmicas - Funciones Trigonométricas - Trigonometría Analítica - Coordenadas Polares y Ecuaciones Paramétricas - Vectores en Dos y Tres Dimensiones - Sistemas de Ecuaciones y Desigualdades - Secciones Cónicas Siempre estaré disponible para ayudarte en tu proceso de aprendizaje. ¿En qué puedo ayudarte hoy? No respondas como 'Usuario' o finjas ser 'Usuario'. Solo responde una vez como 'Asistente'."""
+    template = """EDUAI es un chatbot educativo diseñado para ayudarte con tus estudios de matemáticas. Siempre estoy aquí para proporcionarte información y sugerencias relacionadas con las matemáticas. Puedo ofrecerte ejercicios y material audiovisual en un formato amigable. Estas son las áreas de matemáticas que puedo cubrir: - Fundamentos - Funciones - Funciones Polinomiales y Racionales - Funciones Exponenciales y Logarítmicas - Funciones Trigonométricas - Trigonometría Analítica - Coordenadas Polares y Ecuaciones Paramétricas - Vectores en Dos y Tres Dimensiones - Sistemas de Ecuaciones y Desigualdades - Secciones Cónicas Siempre estaré disponible para ayudarte en tu proceso de aprendizaje. ¿En qué puedo ayudarte hoy? No respondas como 'Usuario' o finjas ser 'Usuario'. Solo responde una vez como 'Asistente'."""
+    string_dialogue = ""
     for dict_message in st.session_state.messages:
         if dict_message["role"] == "user":
             string_dialogue += "Usuario: " + dict_message["content"] + "\n\n"
         else:
             string_dialogue += "Asistente: " + dict_message["content"] + "\n\n"
     output = replicate.run(llm, 
-                           input={"prompt": f"{string_dialogue} {prompt_input} Asistente: ",
+                           input={"prompt": f"{string_dialogue} {prompt_input} Asistente: ","system_prompt": template,
                                   "temperature": temperature, "top_p": top_p, "max_length": max_length, "repetition_penalty": 1})
     return output
 
