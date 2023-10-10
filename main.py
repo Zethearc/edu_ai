@@ -1,12 +1,28 @@
-import chromadb
+from langchain.vectorstores import Chroma
 import streamlit as st
 import replicate
 import os
 
 # Crear un cliente ChromaDB y obtener la colección 'edu_ai'
-chroma_client = chromadb.Client()
-client_persistent = chromadb.PersistentClient(path='data_embeddings')
-db = client_persistent.get_collection(name="edu_ai")
+# import
+from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import Chroma
+from langchain.document_loaders import TextLoader
+
+# load the document and split it into chunks
+loader = TextLoader("/datos.csv")
+documents = loader.load()
+
+# split it into chunks
+text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+docs = text_splitter.split_documents(documents)
+
+# create the open-source embedding function
+embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+
+# load it into Chroma
+db = Chroma.from_documents(docs, embedding_function)
 
 # Título de la aplicación
 st.set_page_config(page_title="🤖 Edu_AI Chatbot")
