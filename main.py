@@ -3,10 +3,6 @@ import streamlit as st
 import replicate
 import os
 
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-
 # Crear un cliente ChromaDB y obtener la colección 'edu_ai'
 chroma_client = chromadb.Client()
 client_persistent = chromadb.PersistentClient(path='data_embeddings')
