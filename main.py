@@ -66,8 +66,14 @@ def generate_edu_ai_response(prompt_input):
         else:
             historial_conversacion += "Asistente: " + dict_message["content"] + "\n\n"
     output = replicate.run(llm, 
-                           input={"prompt": f"{historial_conversacion}Usuario: {prompt_input} Asistente: ", "system_prompt": template,
-                                  "temperature":temperature, "top_p":top_p, "max_length":max_length, "repetition_penalty":1})
+                           input={"top_p": top_p,
+                                "prompt": f"{historial_conversacion}Usuario: {prompt_input} Asistente: ",
+                                "temperature": temperature,
+                                "system_prompt": template,
+                                "max_new_tokens": max_length,
+                                "repetition_penalty": 1
+                                })
+                                  
     return output
 
 # Entrada de texto proporcionada por el usuario
