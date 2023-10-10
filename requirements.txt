@@ -1,3 +1,4 @@
 chromadb
 streamlit
 replicate
+db-sqlite3
