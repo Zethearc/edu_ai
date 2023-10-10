@@ -1,3 +1,3 @@
+chromadb
 streamlit
 replicate
-chromadb
