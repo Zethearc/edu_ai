@@ -3,3 +3,4 @@ chromadb
 replicate
 langchain
 sentence-transformers
+pysqlite3-binary
