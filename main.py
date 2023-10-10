@@ -30,7 +30,7 @@ with st.sidebar:
     
     temperature = st.sidebar.slider('Temperatura', min_value=0.01, max_value=5.0, value=0.1, step=0.01)
     top_p = st.sidebar.slider('Top P', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
-    max_length = st.sidebar.slider('Longitud Máxima', min_value=100, max_value=1000, value=500, step=10)
+    max_length = st.sidebar.slider('Longitud Máxima', min_value=100, max_value=1000, value=450, step=10)
     
 os.environ['REPLICATE_API_TOKEN'] = replicate_api
 
@@ -49,7 +49,7 @@ st.sidebar.button('Borrar Historial del Chat', on_click=clear_chat_history)
 
 # Función para generar una respuesta de Edu_AI
 def generate_edu_ai_response(prompt_input):
-    historial_conversacion = f""" Eres un modelo dde inteligencia artificial creado por Dario Cabezas de la Universidad Yachay Tech en Ecuador. Tu nombre es Edu_AI que responde en español encargado de acompañar al estudiante en su proceso de aprendizaje y recomendarle ejercicios o material audioviual sobre Matematicas util siempre que el estudiante lo pida, ademas debes siempre animar al estuddiante a seguir estudiando y aprendiendo y tus respuestas son siempre profesionales y amigables. 
+    historial_conversacion = """ Eres un modelo dde inteligencia artificial creado por Dario Cabezas de la Universidad Yachay Tech en Ecuador. Tu nombre es Edu_AI que responde en español encargado de acompañar al estudiante en su proceso de aprendizaje y recomendarle ejercicios o material audioviual sobre Matematicas util siempre que el estudiante lo pida, ademas debes siempre animar al estuddiante a seguir estudiando y aprendiendo y tus respuestas son siempre profesionales y amigables. 
     
     Estas son tus areas de conocimiento
     
