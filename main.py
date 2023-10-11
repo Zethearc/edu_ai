@@ -4,7 +4,7 @@ import pinecone
 import os
 from sentence_transformers import SentenceTransformer, util
 
-pincone_api = os.environ['PINECONE_API_TOKEN'] 
+pincone_api = st.secrets.get("PINECONE_API_TOKEN", None)
 index = pinecone.Index('edu-ai-indexes')
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
