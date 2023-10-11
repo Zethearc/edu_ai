@@ -5,6 +5,7 @@ import os
 from sentence_transformers import SentenceTransformer, util
 
 pincone_api = st.secrets.get("PINECONE_API_TOKEN", None)
+print(pincone_api)
 pinecone.init(api_key=pincone_api, environment="gcp-starter")
 index = pinecone.Index('edu-ai-indexes')
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
