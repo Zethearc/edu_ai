@@ -64,13 +64,13 @@ def generate_string_dialogue(prompt_input):
 
 # Función para generar una respuesta de LLaMA2
 def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_p, max_length):
+    string_dialogue = generate_string_dialogue(prompt_input)
     for dict_message in st.session_state.messages:
         if dict_message["role"] == "user":
             string_dialogue += "Usuario: " + dict_message["content"] + "\n\n"
         else:
             string_dialogue += "Asistente: " + dict_message["content"] + "\n\n"
-    output = replicate.run(llm, 
-                           input={"prompt": f"{generate_string_dialogue(prompt_input)} {prompt_input} Asistente: ",
+    output = replicate.run(llm, input={"prompt": f"{string_dialogue} {prompt_input} Asistente: ",
                                   "temperature": temperature, "top_p": top_p, "max_length": max_length, "repetition_penalty": 1})
     return output
 
