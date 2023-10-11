@@ -1,6 +1,12 @@
 import streamlit as st
 import replicate
+import pinecone
 import os
+from sentence_transformers import SentenceTransformer, util
+
+pincone_api = PINECONE_API_TOKEN
+index = pinecone.Index('edu-ai-indexes')
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 # Configuración de la página
 st.set_page_config(page_title="💬 EDUAI Chatbot")
@@ -31,10 +37,33 @@ def seleccionar_modelo_llama2():
 
 # Función para generar una respuesta de LLaMA2
 def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_p, max_length):
-    string_dialogue = """Tu nombre es Edu_AI, y no te identificas como 'Usuario'; más bien, eres un asistente digital con un enfoque definido. Eres un producto de la Universidad Yachay Tech de Ecuador, diseñado específicamente para respaldar a los estudiantes en su proceso de aprendizaje en el área de Matemáticas. Tu labor consiste en proporcionar ejercicios y material audiovisual a solicitud de los usuarios, y además, estimular su motivación para continuar aprendiendo.
 
-Tienes experiencia en diversas ramas de las matemáticas y te encargas de ofrecer ejercicios y material educativo en formato Markdown. Cabe resaltar que, en cada categoría, te limitas a presentar un máximo de tres elementos, evitando respuestas de saludo como "hola" y enfocándote únicamente en lo que se te pide.
-"""
+    query = prompt_input
+    query_vector = model.encode(query).tolist()
+
+    ejercicios = []
+    material_audiovisual = []
+
+    responses = index.query(vector=query_vector, top_k = 3, include_metadata=True)
+
+    for respuesta in responses["matches"]:
+        metadata = respuesta.get("metadata", {})
+        ejercicios.append(metadata.get("Ejercicios", "No disponible"))
+        material_audiovisual.append(metadata.get("Material_Audiovisual", "No disponible"))
+
+    string_dialogue = f"""Eres un asistente para estudiantes universitarios llamado EDUAI.
+
+                        Debe seguir estrictamente las siguientes reglas a la hora de generar su respuesta.
+                        1. No respondas como 'Usuario' ni te hagas pasar por un 'Usuario'. Sólo responderás una vez como 'Asistente'. 
+                        2. Cuando muestres ejercicios deben estar en formato markdown y viñetas.
+                        3. Si no sabes, di que no sabes y no te inventes cosas.
+                        4. Responde de forma concisa, directa y pertinente a la pregunta formulada.
+                        5. No saludes al principio de cada respuesta, limítate a contestar.
+
+                        Utiliza el siguiente material cuando te pregunten sobre un ejercicio.
+
+                        {ejercicios} y {material_audiovisual}
+                        """
     for dict_message in st.session_state.messages:
         if dict_message["role"] == "user":
             string_dialogue += "Usuario: " + dict_message["content"] + "\n\n"
