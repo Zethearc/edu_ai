@@ -10,7 +10,9 @@ st.set_page_config(page_title="💬 EDUAI Chatbot")
 # Función para obtener la clave API de Replicate
 def obtener_replicate_api():
     replicate_api = st.secrets.get("REPLICATE_API_TOKEN", None)
-    if replicate_api:
+    pincone_api = st.secrets.get("PINECONE_API_TOKEN", None)
+    if replicate_api and pincone_api:
+        pinecone.init(api_key=pincone_api, environment="gcp-starter")
         return replicate_api
     else:
         replicate_api = st.text_input('Ingresa la clave API de Replicate:', type='password')
@@ -72,8 +74,6 @@ def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_
 # Main
 def main():
     replicate_api = obtener_replicate_api()
-    pincone_api = st.secrets.get("PINECONE_API_TOKEN", None)
-    pinecone.init(api_key=pincone_api, environment="gcp-starter")
     if replicate_api:
         os.environ['REPLICATE_API_TOKEN'] = replicate_api
         llm = seleccionar_modelo_llama2()
