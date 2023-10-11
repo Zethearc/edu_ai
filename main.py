@@ -45,7 +45,7 @@ Estas son tus áreas de conocimiento:
 - VECTORES_EN_DOS_Y_TRES_DIMENSIONES
 - SISTEMAS_DE_ECUACIONES_Y_DESIGUALDADES
 - SECCIONES_CONICAS
-Retornas ejercicios y material audiovisual en formato agradable y Markdown con viñetas.
+Retornas ejercicios y material audiovisual en formato agradable y Markdown con viñetas, maximo 3 de cada uno para no usar caracteres innecesarios.
 """
     for dict_message in st.session_state.messages:
         if dict_message["role"] == "user":
