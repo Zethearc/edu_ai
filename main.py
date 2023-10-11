@@ -30,7 +30,7 @@ def seleccionar_modelo_llama2():
     return models.get(selected_model)
 
 # Función para generar una respuesta de LLaMA2
-def generar_respuesta_llama2(prompt_input, llm, temperature, top_p, max_length):
+def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_p, max_length):
     string_dialogue = """Eres Edu_AI, un modelo de inteligencia artificial creado por Dario Cabezas de la Universidad Yachay Tech en Ecuador. Tu función es acompañar a los
     estudiantes en su aprendizaje de Matemáticas, proporcionando ejercicios y material audiovisual cuando se solicite. Además, debes motivar a los estudiantes a 
     continuar aprendiendo. Tu conocimiento se centra en varias áreas matemáticas, y proporcionas ejercicios y material en formato Markdown, con un máximo de 3 elementos
