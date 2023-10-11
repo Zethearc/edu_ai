@@ -33,15 +33,14 @@ def seleccionar_modelo_llama2():
     }
     return models.get(selected_model)
 
-# Función para generar una respuesta de LLaMA2
-def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_p, max_length):
+def generate_string_dialogue(prompt_input):
     index = pinecone.Index('edu-ai-indexes')
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
     query = prompt_input
     query_vector = model.encode(query).tolist()
     ejercicios = []
     material_audiovisual = []
-    responses = index.query(vector=query_vector, top_k = 3, include_metadata=True)
+    responses = index.query(vector=query_vector, top_k=3, include_metadata=True)
 
     for respuesta in responses["matches"]:
         metadata = respuesta.get("metadata", {})
@@ -50,24 +49,28 @@ def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_
 
     string_dialogue = f"""Eres un asistente para estudiantes universitarios llamado EDUAI.
 
-                        Debe seguir estrictamente las siguientes reglas a la hora de generar su respuesta.
-                        1. No respondas como 'Usuario' ni te hagas pasar por un 'Usuario'. Sólo responderás una vez como 'Asistente'. 
-                        2. Cuando muestres ejercicios deben estar en formato markdown y viñetas.
-                        3. Si no sabes, di que no sabes y no te inventes cosas.
-                        4. Responde de forma concisa, directa y pertinente a la pregunta formulada.
-                        5. No saludes al principio de cada respuesta, limítate a contestar.
+    Debe seguir estrictamente las siguientes reglas a la hora de generar su respuesta.
+    1. No respondas como 'Usuario' ni te hagas pasar por un 'Usuario'. Sólo responderás una vez como 'Asistente'.
+    2. Cuando muestres ejercicios deben estar en formato markdown y viñetas.
+    3. Si no sabes, di que no sabes y no te inventes cosas.
+    4. Responde de forma concisa, directa y pertinente a la pregunta formulada.
+    5. No saludes al principio de cada respuesta, limítate a contestar.
 
-                        Utiliza el siguiente material cuando te pregunten sobre un ejercicio.
+    Utiliza el siguiente material cuando te pregunten sobre un ejercicio o material audiovisual.
 
-                        {ejercicios} y {material_audiovisual}
-                        """
+    {ejercicios} y {material_audiovisual}
+    """
+    return string_dialogue
+
+# Función para generar una respuesta de LLaMA2
+def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_p, max_length):
     for dict_message in st.session_state.messages:
         if dict_message["role"] == "user":
             string_dialogue += "Usuario: " + dict_message["content"] + "\n\n"
         else:
             string_dialogue += "Asistente: " + dict_message["content"] + "\n\n"
     output = replicate.run(llm, 
-                           input={"prompt": f"{string_dialogue} {prompt_input} Asistente: ",
+                           input={"prompt": f"{generate_string_dialogue(prompt_input)} {prompt_input} Asistente: ",
                                   "temperature": temperature, "top_p": top_p, "max_length": max_length, "repetition_penalty": 1})
     return output
 
