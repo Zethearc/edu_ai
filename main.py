@@ -68,14 +68,14 @@ def main():
         max_length = st.sidebar.slider('longitud máxima', min_value=64, max_value=4096, value=1024, step=8)
 
         if "messages" not in st.session_state.keys():
-            st.session_state.messages = [{"role": "assistant", "content": "Haz tus preguntas"}
+            st.session_state.messages = [{"role": "assistant", "content": "Haz tus preguntas"}]
 
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.write(message["content"])
 
         def borrar_historial_de_chat():
-            st.session_state.messages = [{"role": "assistant", "content": "Haz tus preguntas"}
+            st.session_state.messages = [{"role": "assistant", "content": "Haz tus preguntas"}]
         st.sidebar.button('Borrar Historial de Chat', on_click=borrar_historial_de_chat)
 
         if prompt := st.chat_input(disabled=not replicate_api):
