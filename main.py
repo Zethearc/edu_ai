@@ -33,19 +33,6 @@ with st.sidebar:
     
 os.environ['REPLICATE_API_TOKEN'] = replicate_api
 
-# Almacena las respuestas generadas por LLM
-if "messages" not in st.session_state.keys():
-    st.session_state.messages = [{"role": "assistant", "content": "Haz tus preguntas"}]
-
-# Muestra o borra los mensajes del chat
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
-
-def borrar_historial_de_chat():
-    st.session_state.messages = [{"role": "assistant", "content": "Haz tus preguntas"}]
-st.sidebar.button('Borrar Historial de Chat', on_click=borrar_historial_de_chat)
-
 # Función para generar una respuesta de LLaMA2
 def generar_respuesta_llama2(prompt_input):
     string_dialogue = """Eres un modelo de inteligencia artificial creado por Dario Cabezas de la Universidad Yachay Tech en Ecuador. Tu nombre es Edu_AI y respondes en español. Estás encargado de acompañar al estudiante en su proceso de aprendizaje y recomendarle ejercicios o material audiovisual sobre Matemáticas siempre que el estudiante lo solicite. Además, debes animar al estudiante a seguir estudiando y aprendiendo, y tus respuestas son siempre profesionales y amigables. 
@@ -64,32 +51,20 @@ Estas son tus áreas de conocimiento:
 - SECCIONES_CONICAS
 Retornas ejercicios y material audiovisual en formato agradable y Markdown con viñetas.
 """
-    for dict_message in st.session_state.messages:
-        if dict_message["role"] == "user":
-            string_dialogue += "Usuario: " + dict_message["content"] + "\n\n"
-        else:
-            string_dialogue += "Asistente: " + dict_message["content"] + "\n\n"
     output = replicate.run(llm, 
                            input={"prompt": f"{string_dialogue} {prompt_input} Asistente: ",
                                   "temperature":temperature, "top_p":top_p, "max_length":max_length, "repetition_penalty":1})
     return output
 
 # Prompt proporcionado por el usuario
-if prompt := st.chat_input(disabled=not replicate_api):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+if prompt := st.text_area("Escribe tu mensaje y presiona Enter", key="user_input"):
     with st.chat_message("user"):
         st.write(prompt)
 
-# Genera una nueva respuesta si el último mensaje no es del asistente
-if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("Pensando..."):
             response = generar_respuesta_llama2(prompt)
-            placeholder = st.empty()
             full_response = ''
             for item in response:
                 full_response += item
-                placeholder.markdown(full_response)
-            placeholder.markdown(full_response)
-    message = {"role": "assistant", "content": full_response}
-    st.session_state.messages.append(message)
+            st.write(full_response)
