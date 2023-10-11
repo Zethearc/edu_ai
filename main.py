@@ -4,12 +4,6 @@ import pinecone
 import os
 from sentence_transformers import SentenceTransformer, util
 
-pincone_api = st.secrets.get("PINECONE_API_TOKEN", None)
-print(pincone_api)
-pinecone.init(api_key=pincone_api, environment="gcp-starter")
-index = pinecone.Index('edu-ai-indexes')
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-
 # Configuración de la página
 st.set_page_config(page_title="💬 EDUAI Chatbot")
 
@@ -39,13 +33,12 @@ def seleccionar_modelo_llama2():
 
 # Función para generar una respuesta de LLaMA2
 def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_p, max_length):
-
+    index = pinecone.Index('edu-ai-indexes')
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
     query = prompt_input
     query_vector = model.encode(query).tolist()
-
     ejercicios = []
     material_audiovisual = []
-
     responses = index.query(vector=query_vector, top_k = 3, include_metadata=True)
 
     for respuesta in responses["matches"]:
@@ -79,6 +72,8 @@ def generar_respuesta_llama2(prompt_input, replicate_api, llm, temperature, top_
 # Main
 def main():
     replicate_api = obtener_replicate_api()
+    pincone_api = st.secrets.get("PINECONE_API_TOKEN", None)
+    pinecone.init(api_key=pincone_api, environment="gcp-starter")
     if replicate_api:
         os.environ['REPLICATE_API_TOKEN'] = replicate_api
         llm = seleccionar_modelo_llama2()
