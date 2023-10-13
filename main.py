@@ -1,63 +1,71 @@
 import streamlit as st
-from langchain import LLMChain, PromptTemplate
-from langchain.callbacks.manager import CallbackManager
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.llms import LlamaCpp
+import os
+from ctransformers import AutoModelForCausalLM
 
-import gdown
+# App title
+st.set_page_config(page_title="🦙💬 Llama 2 Chatbot")
 
-# Definir el enlace de Google Drive al archivo
-google_drive_url = "https://drive.google.com/file/d/1PCEFXe1WSJrFdvzUEt0Tcumzq_oPLLqS/view?usp=drive_link"
+@st.cache_resource()
+def ChatModel(temperature, top_p):
+    return AutoModelForCausalLM.from_pretrained(
+        'ggml-llama-2-7b-chat-q4_0.bin', 
+        model_type='llama',
+        temperature=temperature, 
+        top_p = top_p)
 
-# Especificar el archivo de destino local
-local_file_path = "llama-2-7b-chat.ggmlv3.q2_K.bin"
+# Replicate Credentials
+with st.sidebar:
+    st.title('🦙💬 Llama 2 Chatbot')
 
-# Descargar el archivo desde Google Drive
-gdown.download(google_drive_url, local_file_path, quiet=False)
+    # Refactored from <https://github.com/a16z-infra/llama2-chatbot>
+    st.subheader('Models and parameters')
+    
+    temperature = st.sidebar.slider('temperature', min_value=0.01, max_value=2.0, value=0.1, step=0.01)
+    top_p = st.sidebar.slider('top_p', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
+    # max_length = st.sidebar.slider('max_length', min_value=64, max_value=4096, value=512, step=8)
+    chat_model =ChatModel(temperature, top_p)
+    # st.markdown('📖 Learn how to build this app in this [blog](#link-to-blog)!')
 
+# Store LLM generated responses
+if "messages" not in st.session_state.keys():
+    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
 
-TEMPLATE = """Question: {question}
+# Display or clear chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
 
-Answer: """
+def clear_chat_history():
+    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
+st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
 
+# Function for generating LLaMA2 response
+def generate_llama2_response(prompt_input):
+    string_dialogue = "You are a helpful assistant. You do not respond as 'User' or pretend to be 'User'. You only respond once as 'Assistant'."
+    for dict_message in st.session_state.messages:
+        if dict_message["role"] == "user":
+            string_dialogue += "User: " + dict_message["content"] + "\\n\\n"
+        else:
+            string_dialogue += "Assistant: " + dict_message["content"] + "\\n\\n"
+    output = chat_model(f"prompt {string_dialogue} {prompt_input} Assistant: ")
+    return output
 
-def get_llm_chain(model_name: str) -> LLMChain:
-    """Get LLMChain with LlamaCpp as LLM.
+# User-provided prompt
+if prompt := st.chat_input():
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
 
-    Args:
-        model_name (str): Name of the Llama model.
-
-    Returns:
-        LLMChain: LLMChain with a given model.
-    """
-    prompt = PromptTemplate(template=TEMPLATE, input_variables=["question"])
-    callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
-
-    llm = LlamaCpp(
-        model_path=model_name,
-        callback_manager=callback_manager,
-        verbose=True,
-    )
-    llm_chain = LLMChain(prompt=prompt, llm=llm)
-    return llm_chain
-
-
-def main() -> None:
-    """Langchain + Streamlit + Llama = Bot 🤖"""
-
-    st.set_page_config(page_title="Bot 🤖", layout="wide")
-    st.header("Bot 🤖")
-    st.markdown("Langchain 🦜️⛓️ + Streamlit 👑 + Llama 🦙")
-
-    llm_chain = get_llm_chain(model_name=local_file_path)
-
-    question = st.text_input("What do you want to ask?")
-    button = st.button("Ask")
-
-    if button:
-        output = llm_chain.run(question)
-        st.write(output)
-
-
-if __name__ == "__main__":
-    main()
+# Generate a new response if last message is not from assistant
+if st.session_state.messages[-1]["role"] != "assistant":
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            response = generate_llama2_response(prompt)
+            placeholder = st.empty()
+            full_response = ''
+            for item in response:
+                full_response += item
+                placeholder.markdown(full_response)
+            placeholder.markdown(full_response)
+    message = {"role": "assistant", "content": full_response}
+    st.session_state.messages.append(message)
