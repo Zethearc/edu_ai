@@ -5,3 +5,4 @@ langchain
 pinecone-client
 sentence-transformers
 gdown
+llama-cpp-python
