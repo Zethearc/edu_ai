@@ -4,3 +4,4 @@ replicate
 langchain
 pinecone-client
 sentence-transformers
+gdown
