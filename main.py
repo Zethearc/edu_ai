@@ -7,7 +7,7 @@ from langchain.llms import LlamaCpp
 import gdown
 
 # Definir el enlace de Google Drive al archivo
-google_drive_url = "https://drive.google.com/uc?id=1PCEFXe1WSJrFdvzUEt0Tcumzq_oPLLqS"
+google_drive_url = "https://drive.google.com/file/d/1PCEFXe1WSJrFdvzUEt0Tcumzq_oPLLqS/view?usp=drive_link"
 
 # Especificar el archivo de destino local
 local_file_path = "llama-2-7b-chat.ggmlv3.q2_K.bin"
