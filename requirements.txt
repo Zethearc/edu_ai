@@ -6,3 +6,4 @@ pinecone-client
 sentence-transformers
 gdown
 llama-cpp-python
+ctransformers 
