@@ -1,7 +1,7 @@
-streamlit
 transformers
-torch
-llama-index
-pathlib
+sentence-transformers
+pinecone-client
 accelerate
-bitsandbytes
+langchain
+streamlit
+torch
