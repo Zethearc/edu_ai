@@ -1,9 +1,5 @@
 streamlit
-chromadb
-replicate
-langchain
-pinecone-client
-sentence-transformers
-gdown
-llama-cpp-python
-ctransformers 
+transformers
+torch
+llama-index
+pathlib
