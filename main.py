@@ -1,108 +1,130 @@
-# Import streamlit for app dev
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain.llms import HuggingFacePipeline
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.prompts import PromptTemplate
+from langchain.chains import ConversationChain
+import pinecone
+import transformers
+import pinecone
+from sentence_transformers import SentenceTransformer
 import streamlit as st
 
-# Import transformer classes for generaiton
-from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
-# Import torch for datatype attributes 
-import torch
-# Import the prompt wrapper...but for llama index
-from llama_index.prompts.prompts import SimpleInputPrompt
-# Import the llama index HF Wrapper
-from llama_index.llms import HuggingFaceLLM
-# Bring in embeddings wrapper
-from llama_index.embeddings import LangchainEmbedding
-# Bring in HF embeddings - need these to represent document chunks
-from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-# Bring in stuff to change service context
-from llama_index import set_global_service_context
-from llama_index import ServiceContext
-# Import deps to load documents 
-from llama_index import VectorStoreIndex, download_loader
-from pathlib import Path
+embed_model_id = 'sentence-transformers/all-MiniLM-L6-v2'
 
-# Define variable to hold llama2 weights naming 
-name = "meta-llama/Llama-2-70b-chat-hf"
-# Set auth token variable from hugging face 
-auth_token = st.secrets["HF_TOKEN"]
+pinecone.init(
+    api_key=st.secrets["PINECONE_API_KEY"],
+    environment=st.secrets["PINECONE_ENVIRONMENT"]
+)
 
-@st.cache_resource
-def get_tokenizer_model():
-    # Create tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(name, cache_dir='./model/', use_auth_token=auth_token)
+index_name = 'edu-ai-indexes'
+index = pinecone.Index(index_name)
 
-    # Create model
-    model = AutoModelForCausalLM.from_pretrained(name, cache_dir='./model/'
-                            , use_auth_token=auth_token, torch_dtype=torch.float16, 
-                            rope_scaling={"type": "dynamic", "factor": 2}, load_in_8bit=True) 
+model_id = 'meta-llama/Llama-2-7b-chat-hf'
+hf_auth = st.secrets["HF_TOKEN"]
+model_config = transformers.AutoConfig.from_pretrained(
+    model_id,
+    use_auth_token=hf_auth
+)
+model = transformers.AutoModelForCausalLM.from_pretrained(
+    model_id,
+    trust_remote_code=True,
+    config=model_config,
+    device_map='auto',
+    use_auth_token=hf_auth
+)
+tokenizer = transformers.AutoTokenizer.from_pretrained(
+    model_id,
+    use_auth_token=hf_auth
+)
 
-    return tokenizer, model
-tokenizer, model = get_tokenizer_model()
+pipeline = transformers.pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    device_map="auto",
+    max_length=1000,
+    do_sample=True,
+    top_k=10,
+    num_return_sequences=1,
+    eos_token_id=tokenizer.eos_token_id
+)
 
-# Create a system prompt 
-system_prompt = """<s>[INST] <<SYS>>
-You are a helpful, respectful and honest assistant. Always answer as 
-helpfully as possible, while being safe. Your answers should not include
-any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content.
-Please ensure that your responses are socially unbiased and positive in nature.
+# Función para buscar en Pinecone y formatear los resultados
+def buscar_en_pinecone(query):
+    index = pinecone.Index('edu-ai-indexes')
+    query_vector = embed_model_id.encode(query).tolist()
+    ejercicios = []
+    material_audiovisual = []
 
-If a question does not make any sense, or is not factually coherent, explain 
-why instead of answering something not correct. If you don't know the answer 
-to a question, please don't share false information.
+    responses = index.query(vector=query_vector, top_k=3, include_metadata=True)
 
-Your goal is to provide answers relating to the financial performance of 
-the company.<</SYS>>
+    for respuesta in responses["matches"]:
+        metadata = respuesta.get("metadata", {})
+        ejercicios.append(metadata.get("Ejercicios", "No disponible"))
+        material_audiovisual.append(metadata.get("Material_Audiovisual", "No disponible"))
+
+    # Formatear los resultados como un string
+    resultado_formateado = "Ejercicios:\n"
+    resultado_formateado += "\n".join(ejercicios)
+    resultado_formateado += "\n\nMaterial Audiovisual:\n"
+    resultado_formateado += "\n".join(material_audiovisual)
+
+    return resultado_formateado
+
+llm = HuggingFacePipeline(pipeline=pipeline, model_kwargs={'temperature': 0.7})
+
+prompt_template = """<s>[INST] <<SYS>>
+{{Eres EDUAI, un chatbot desarrollado por Yachay Tech para ayudar a estudiantes de matemáticas. Sigue estas reglas:
+    Responde como asistente.
+    Sé amable, conciso y rápido.
+    No saludes en cada respuesta, solo responde la pregunta.
+    Anima al estudiante a seguir aprendiendo.
+    Responde en español siempre.
+    Utiliza el formato markdown y viñetas.
+    Usa ejercicios y material audiovisual para complementar tus respuestas cuando estén disponibles.}}<<SYS>>
+###
+
+Previous Conversation:
+'''
+{history}
+'''
+
+{{{input}}}[/INST]
+
 """
-# Throw together the query wrapper
-query_wrapper_prompt = SimpleInputPrompt("{query_str} [/INST]")
 
-# Create a HF LLM using the llama index wrapper 
-llm = HuggingFaceLLM(context_window=4096,
-                    max_new_tokens=256,
-                    system_prompt=system_prompt,
-                    query_wrapper_prompt=query_wrapper_prompt,
-                    model=model,
-                    tokenizer=tokenizer)
+memory = ConversationBufferWindowMemory(k=5)
 
-# Create and dl embeddings instance  
-embeddings=LangchainEmbedding(
-    HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-)
-
-# Create new service context instance
-service_context = ServiceContext.from_defaults(
-    chunk_size=1024,
+prompt = PromptTemplate(template=prompt_template, input_variables=['input', 'history'])
+chain = ConversationChain(
     llm=llm,
-    embed_model=embeddings
+    prompt=prompt,
+    memory=memory
 )
-# And set the service context
-set_global_service_context(service_context)
 
-# Download PDF Loader 
-PyMuPDFReader = download_loader("PyMuPDFReader")
-# Create PDF Loader
-loader = PyMuPDFReader()
-# Load documents 
-documents = loader.load(file_path=Path('./data/annualreport.pdf'), metadata=True)
+st.set_page_config(page_title="EDUAI-CHAT")
 
-# Create an index - we'll be able to query this in a sec
-index = VectorStoreIndex.from_documents(documents)
-# Setup index query engine using LLM 
-query_engine = index.as_query_engine()
+st.title("EDUAI-CHAT")
 
-# Create centered main title 
-st.title('🦙 Llama Banker')
-# Create a text input box for the user
-prompt = st.text_input('Input your prompt here')
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# If the user hits enter
-if prompt:
-    response = query_engine.query(prompt)
-    # ...and write it out to the screen
-    st.write(response)
+# Display chat messages from history on app rerun
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    # Display raw response object
-    with st.expander('Response Object'):
-        st.write(response)
-    # Display source text
-    with st.expander('Source Text'):
-        st.write(response.get_formatted_sources())
+# React to user input
+if prompt := st.chat_input("What is up?"):
+    # Display user message in chat message container
+    st.chat_message("user").markdown(prompt)
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    response = chain.run(user_prompt)
+    # Display assistant response in chat message container
+    with st.chat_message("assistant"):
+        st.markdown(response)
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": response})
