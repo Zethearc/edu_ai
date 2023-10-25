@@ -3,3 +3,5 @@ transformers
 torch
 llama-index
 pathlib
+accelerate
+bitsandbytes
