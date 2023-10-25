@@ -1,71 +1,108 @@
+# Import streamlit for app dev
 import streamlit as st
-import os
-from ctransformers import AutoModelForCausalLM
 
-# App title
-st.set_page_config(page_title="🦙💬 Llama 2 Chatbot")
+# Import transformer classes for generaiton
+from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
+# Import torch for datatype attributes 
+import torch
+# Import the prompt wrapper...but for llama index
+from llama_index.prompts.prompts import SimpleInputPrompt
+# Import the llama index HF Wrapper
+from llama_index.llms import HuggingFaceLLM
+# Bring in embeddings wrapper
+from llama_index.embeddings import LangchainEmbedding
+# Bring in HF embeddings - need these to represent document chunks
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+# Bring in stuff to change service context
+from llama_index import set_global_service_context
+from llama_index import ServiceContext
+# Import deps to load documents 
+from llama_index import VectorStoreIndex, download_loader
+from pathlib import Path
 
-@st.cache_resource()
-def ChatModel(temperature, top_p):
-    return AutoModelForCausalLM.from_pretrained(
-        'ggml-llama-2-7b-chat-q4_0.bin', 
-        model_type='llama',
-        temperature=temperature, 
-        top_p = top_p)
+# Define variable to hold llama2 weights naming 
+name = "meta-llama/Llama-2-70b-chat-hf"
+# Set auth token variable from hugging face 
+auth_token = "YOUR HUGGING FACE AUTH TOKEN HERE"
 
-# Replicate Credentials
-with st.sidebar:
-    st.title('🦙💬 Llama 2 Chatbot')
+@st.cache_resource
+def get_tokenizer_model():
+    # Create tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(name, cache_dir='./model/', use_auth_token=auth_token)
 
-    # Refactored from <https://github.com/a16z-infra/llama2-chatbot>
-    st.subheader('Models and parameters')
-    
-    temperature = st.sidebar.slider('temperature', min_value=0.01, max_value=2.0, value=0.1, step=0.01)
-    top_p = st.sidebar.slider('top_p', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
-    # max_length = st.sidebar.slider('max_length', min_value=64, max_value=4096, value=512, step=8)
-    chat_model =ChatModel(temperature, top_p)
-    # st.markdown('📖 Learn how to build this app in this [blog](#link-to-blog)!')
+    # Create model
+    model = AutoModelForCausalLM.from_pretrained(name, cache_dir='./model/'
+                            , use_auth_token=auth_token, torch_dtype=torch.float16, 
+                            rope_scaling={"type": "dynamic", "factor": 2}, load_in_8bit=True) 
 
-# Store LLM generated responses
-if "messages" not in st.session_state.keys():
-    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
+    return tokenizer, model
+tokenizer, model = get_tokenizer_model()
 
-# Display or clear chat messages
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
+# Create a system prompt 
+system_prompt = """<s>[INST] <<SYS>>
+You are a helpful, respectful and honest assistant. Always answer as 
+helpfully as possible, while being safe. Your answers should not include
+any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content.
+Please ensure that your responses are socially unbiased and positive in nature.
 
-def clear_chat_history():
-    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
-st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
+If a question does not make any sense, or is not factually coherent, explain 
+why instead of answering something not correct. If you don't know the answer 
+to a question, please don't share false information.
 
-# Function for generating LLaMA2 response
-def generate_llama2_response(prompt_input):
-    string_dialogue = "You are a helpful assistant. You do not respond as 'User' or pretend to be 'User'. You only respond once as 'Assistant'."
-    for dict_message in st.session_state.messages:
-        if dict_message["role"] == "user":
-            string_dialogue += "User: " + dict_message["content"] + "\\n\\n"
-        else:
-            string_dialogue += "Assistant: " + dict_message["content"] + "\\n\\n"
-    output = chat_model(f"prompt {string_dialogue} {prompt_input} Assistant: ")
-    return output
+Your goal is to provide answers relating to the financial performance of 
+the company.<</SYS>>
+"""
+# Throw together the query wrapper
+query_wrapper_prompt = SimpleInputPrompt("{query_str} [/INST]")
 
-# User-provided prompt
-if prompt := st.chat_input():
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.write(prompt)
+# Create a HF LLM using the llama index wrapper 
+llm = HuggingFaceLLM(context_window=4096,
+                    max_new_tokens=256,
+                    system_prompt=system_prompt,
+                    query_wrapper_prompt=query_wrapper_prompt,
+                    model=model,
+                    tokenizer=tokenizer)
 
-# Generate a new response if last message is not from assistant
-if st.session_state.messages[-1]["role"] != "assistant":
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            response = generate_llama2_response(prompt)
-            placeholder = st.empty()
-            full_response = ''
-            for item in response:
-                full_response += item
-                placeholder.markdown(full_response)
-            placeholder.markdown(full_response)
-    message = {"role": "assistant", "content": full_response}
-    st.session_state.messages.append(message)
+# Create and dl embeddings instance  
+embeddings=LangchainEmbedding(
+    HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+)
+
+# Create new service context instance
+service_context = ServiceContext.from_defaults(
+    chunk_size=1024,
+    llm=llm,
+    embed_model=embeddings
+)
+# And set the service context
+set_global_service_context(service_context)
+
+# Download PDF Loader 
+PyMuPDFReader = download_loader("PyMuPDFReader")
+# Create PDF Loader
+loader = PyMuPDFReader()
+# Load documents 
+documents = loader.load(file_path=Path('./data/annualreport.pdf'), metadata=True)
+
+# Create an index - we'll be able to query this in a sec
+index = VectorStoreIndex.from_documents(documents)
+# Setup index query engine using LLM 
+query_engine = index.as_query_engine()
+
+# Create centered main title 
+st.title('🦙 Llama Banker')
+# Create a text input box for the user
+prompt = st.text_input('Input your prompt here')
+
+# If the user hits enter
+if prompt:
+    response = query_engine.query(prompt)
+    # ...and write it out to the screen
+    st.write(response)
+
+    # Display raw response object
+    with st.expander('Response Object'):
+        st.write(response)
+    # Display source text
+    with st.expander('Source Text'):
+        st.write(response.get_formatted_sources())
