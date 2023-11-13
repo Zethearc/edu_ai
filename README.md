@@ -48,18 +48,18 @@ Opciones:
   '--skip-init-prompt': Saltar el prompt inicial para un inicio más rápido.
   '--debug': Habilitar el registro de depuración.
 
-#Comandos de Telegram
+# Comandos de Telegram
 '/start' o '/help': Muestra un mensaje de bienvenida con información sobre cómo usar el bot.
 '/raw <prompt>': Usa tu propio prompt en lugar del prompt predeterminado.
 '/history': Muestra el historial de conversación y permite eliminarlo.
-Historial de Conversación
+# Historial de Conversación
 EDUAI puede mantener un historial de conversación. Puedes acceder a tu historial utilizando el comando /history en Telegram.
 
-#Eliminación de Historial
+# Eliminación de Historial
 Puedes eliminar tu historial de conversación con el bot utilizando el botón "Delete history" disponible en la vista del historial.
 
-#Contribuir
+# Contribuir
 Si deseas contribuir a este proyecto, ¡estamos abiertos a colaboraciones! Si tienes alguna sugerencia, mejora o corrección de errores, no dudes en crear un "Pull Request".
 
-#Licencia
+# Licencia
 Este proyecto se encuentra bajo la Licencia MIT.
